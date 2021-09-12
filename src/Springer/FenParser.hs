@@ -17,7 +17,7 @@ data FenPosition
         fenHalfMoves :: Int,
         fenFullMoves :: Int
       }
-  deriving (Show)
+  deriving (Show, Eq)
 
 parse :: ReadP FenPosition
 parse = do
@@ -86,7 +86,7 @@ castling = go [] <$> munch1 isCastle
         'q' -> BlackQueenCastling
         'k' -> BlackKingCastling
 
-data EnPassant = NoEnPassant | EnPassant String deriving (Show)
+data EnPassant = NoEnPassant | EnPassant String deriving (Show, Eq)
 
 enPassant :: ReadP EnPassant
 enPassant = char '-' *> pure NoEnPassant <|> EnPassant <$> move
@@ -97,7 +97,7 @@ move = do
       isRank r = elem r "12345678"
   f <- satisfy isFile
   r <- satisfy isRank
-  return $ f : [r]
+  return [f,r]
 
 moveCount :: ReadP Int
 moveCount = read <$> munch1 isDigit
