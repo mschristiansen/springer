@@ -1,13 +1,14 @@
-module Board where
+module Springer.Board where
 
 import Data.Char (toUpper)
 
-newtype Board = Board [Square]
+newtype Board = Board [Square] deriving (Show, Eq)
 
 data Square
   = Empty
   | White Piece
   | Black Piece
+  deriving (Eq)
 
 data Piece
   = Pawn
