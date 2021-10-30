@@ -7,6 +7,7 @@ import Control.Monad (void)
 import Data.Char (digitToInt, isDigit)
 import Springer.Board
 import Text.ParserCombinators.ReadP
+import Data.Functor (($>))
 
 data FenPosition
   = FenPosition
@@ -32,12 +33,12 @@ parse = do
   hm <- moveCount
   space
   fm <- moveCount
-  return $ FenPosition p a c e hm fm
+  pure $ FenPosition p a c e hm fm
 
 placement :: ReadP Board
-placement = Board <$> go [] <$> munch1 isPlacement
+placement = Board . go [] <$> munch1 isPlacement
   where
-    isPlacement c = elem c "prnbqkPRNBQK12345678/"
+    isPlacement c = c `elem` "prnbqkPRNBQK12345678/"
     go acc [] = acc
     go acc (p : ps) = go (acc <> charPieces p) ps
     charPieces :: Char -> [Square]
@@ -62,7 +63,7 @@ data ActivePlayer = WhitePlayer | BlackPlayer deriving (Show, Eq)
 
 activePlayer :: ReadP ActivePlayer
 activePlayer =
-  char 'w' *> pure WhitePlayer <|> char 'b' *> pure BlackPlayer
+  char 'w' $> WhitePlayer <|> char 'b' $> BlackPlayer
 
 data Castling
   = NoCastling
@@ -75,7 +76,7 @@ data Castling
 castling :: ReadP [Castling]
 castling = go [] <$> munch1 isCastle
   where
-    isCastle c = elem c "-QKqk"
+    isCastle c = c `elem` "-QKqk"
     go acc [] = acc
     go acc (c : cs) = go (fromChar c : acc) cs
     fromChar ch =
@@ -89,12 +90,12 @@ castling = go [] <$> munch1 isCastle
 data EnPassant = NoEnPassant | EnPassant String deriving (Show, Eq)
 
 enPassant :: ReadP EnPassant
-enPassant = char '-' *> pure NoEnPassant <|> EnPassant <$> move
+enPassant = (char '-' $> NoEnPassant) <|> EnPassant <$> move
 
 move :: ReadP String
 move = do
-  let isFile f = elem f "abcdefgh"
-      isRank r = elem r "12345678"
+  let isFile f = f `elem` "abcdefgh"
+      isRank r = r `elem` "12345678"
   f <- satisfy isFile
   r <- satisfy isRank
   return [f,r]

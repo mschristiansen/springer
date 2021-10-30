@@ -9,13 +9,13 @@ main = do
   let logFile = "/tmp/springer.log"
   hSetBuffering stdout NoBuffering
   let go = do
-        s <- hGetLine stdin
-        appendFile logFile ("< " <> s)
+        s <- getLine
+        appendFile logFile ("< " <> s <> "\n")
         let resp = handleCommand s
         case resp of
-          Left err -> appendFile logFile ("e " <> err)
+          Left err -> appendFile logFile ("e " <> err <> "\n")
           Right resp' -> do
-            mapM_ (appendFile logFile) resp'
+            mapM_ (\s -> appendFile logFile ("> " <> s <> "\n")) resp'
             mapM_ putStrLn resp'
         go
   go
@@ -37,7 +37,7 @@ respond command =
     IsReady -> ["readyok"]
     UciNewGame -> []
     PositionStart -> []
-    Go -> []
+    Go _ -> []
     Stop -> []
     PonderHit -> []
     Quit -> []

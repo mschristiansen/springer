@@ -12,6 +12,7 @@ import Control.Applicative ((<|>))
 import Data.Char (isLetter)
 import Text.ParserCombinators.ReadP
 import qualified Springer.FenParser as Fen
+import Data.Functor (($>))
 
 data GuiCommand
   = Uci
@@ -22,28 +23,28 @@ data GuiCommand
   | UciNewGame
   | PositionStart
   | Position Fen.FenPosition
-  | Go
+  | Go [GoCommand]
   | Stop
   | PonderHit
   | Quit
   deriving (Show, Eq)
 
 uci :: ReadP GuiCommand
-uci = string "uci" *> pure Uci
+uci = string "uci" $> Uci
 
 -- Example: "debug" || "debug off"
 debug :: ReadP GuiCommand
 debug = do
   string "debug"
   skipSpaces
-  opt <- option Nothing $ (Just <$> true <|> Just <$> false)
+  opt <- option Nothing (Just <$> true <|> Just <$> false)
   return $ Debug opt
 
 true :: ReadP Bool
-true = string "on" *> pure True
+true = string "on" $> True
 
 false :: ReadP Bool
-false = string "off" *> pure False
+false = string "off" $> False
 
 -- Example: "setoption name UCI_AnalyseMode value true"
 setOption :: ReadP GuiCommand
@@ -61,10 +62,10 @@ setOption = do
   pure $ SetOption name value
 
 isReady :: ReadP GuiCommand
-isReady = string "isready" *> pure IsReady
+isReady = string "isready" $> IsReady
 
 uciNewGame :: ReadP GuiCommand
-uciNewGame = string "ucinewgame" *> pure UciNewGame
+uciNewGame = string "ucinewgame" $> UciNewGame
 
 -- Example: "position startpos moves e2e4 e7e5"
 positionStart :: ReadP GuiCommand
@@ -80,27 +81,44 @@ positionFen = do
   skipSpaces
   string "fen"
   skipSpaces
-  fen <- Fen.parse
-  pure $ Position fen
+  Position <$> Fen.parse
 
 -- Examples: e2e4, e7e5, e1g1 (white short castling), e7e8q (for
 -- promotion)
 move :: ReadP String
 move = do
-  let isFile f = elem f "abcdefgh"
-      isRank r = elem r "12345678"
+  let isFile f = f `elem` "abcdefgh"
+      isRank r = r `elem` "12345678"
   f <- satisfy isFile
   r <- satisfy isRank
   g <- satisfy isFile
   s <- satisfy isRank
-  return $ [f,r,g,s]
+  return [f,r,g,s]
 
 -- Example: "go infinite"
 go :: ReadP GuiCommand
-go = string "go" *> pure Go
+go = do
+  string "go"
+  skipSpaces
+  pure $ Go [GoInfinite]
+
+data GoCommand
+  = GoSearchMoves String
+  | GoPonder
+  | GoWhiteTime Int
+  | GoBlackTime Int
+  | GoWhiteIncrement Int
+  | GoBlackIncrement Int
+  | GoMovesToGo Int
+  | GoDepth Int
+  | GoNodes Int
+  | GoMate Int
+  | GoMoveTime Int
+  | GoInfinite
+  deriving (Show, Eq)
 
 stop :: ReadP GuiCommand
-stop = string "stop" *> pure Stop
+stop = string "stop" $> Stop
 
 request :: ReadP [GuiCommand]
 -- request = sepBy oneRequest skipSpaces

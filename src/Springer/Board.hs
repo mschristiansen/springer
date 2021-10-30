@@ -23,14 +23,14 @@ startPosition :: Board
 startPosition =
   Board $
     concat
-      [ (map Black startPieces),
-        (map Black $ replicate 8 Pawn),
-        (replicate 8 Empty),
-        (replicate 8 Empty),
-        (replicate 8 Empty),
-        (replicate 8 Empty),
-        (map White $ replicate 8 Pawn),
-        (map White $ startPieces)
+      [ map Black startPieces,
+        replicate 8 (Black Pawn),
+        replicate 8 Empty,
+        replicate 8 Empty,
+        replicate 8 Empty,
+        replicate 8 Empty,
+        replicate 8 (White Pawn),
+        map White startPieces
       ]
 
 startPieces :: [Piece]
