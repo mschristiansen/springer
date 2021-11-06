@@ -19,10 +19,11 @@ extra-source-files: CHANGELOG.md
 
 library
     exposed-modules:  Springer,
-                      Springer.UciParser
-                      Springer.FenParser
-                      Springer.Engine
                       Springer.Board
+                      Springer.Engine
+                      Springer.FenParser
+                      Springer.Parse
+                      Springer.UciParser
 
     -- other-modules:    Springer.Types
 
@@ -51,7 +52,7 @@ test-suite springer-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Main.hs
-  -- other-modules:
+  other-modules:       Springer.FenParser.Test
   build-depends:       QuickCheck
                      , base
                      , hspec

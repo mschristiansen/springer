@@ -1,27 +1,26 @@
 -- https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
 -- See also section 16.1 in the PGN Standard(https://ia802908.us.archive.org/26/items/pgn-standard-1994-03-12/PGN_standard_1994-03-12.txt)
-module Springer.FenParser where
+module Springer.FenParser (fenPosition, FenPosition (..), ActivePlayer (..), Castling (..), EnPassant (..)) where
 
 import Control.Applicative ((<|>))
 import Control.Monad (void)
 import Data.Char (digitToInt, isDigit)
-import Springer.Board
-import Text.ParserCombinators.ReadP
 import Data.Functor (($>))
+import Springer.Board
+import Springer.Parse
 
-data FenPosition
-  = FenPosition
-      { fenBoard :: Board,
-        fenActivePlayer :: ActivePlayer,
-        fenCastling :: [Castling],
-        fenEnPassant :: EnPassant,
-        fenHalfMoves :: Int,
-        fenFullMoves :: Int
-      }
+data FenPosition = FenPosition
+  { fenBoard :: Board,
+    fenActivePlayer :: ActivePlayer,
+    fenCastling :: [Castling],
+    fenEnPassant :: EnPassant,
+    fenHalfMoves :: Int,
+    fenFullMoves :: Int
+  }
   deriving (Show, Eq)
 
-parse :: ReadP FenPosition
-parse = do
+fenPosition :: ReadP FenPosition
+fenPosition = do
   p <- placement
   space
   a <- activePlayer
@@ -98,7 +97,7 @@ move = do
       isRank r = r `elem` "12345678"
   f <- satisfy isFile
   r <- satisfy isRank
-  return [f,r]
+  return [f, r]
 
 moveCount :: ReadP Int
 moveCount = read <$> munch1 isDigit

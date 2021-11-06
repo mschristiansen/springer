@@ -6,13 +6,13 @@
 -- https://two-wrongs.com/parser-combinators-parsing-for-haskell-beginners.html
 -- https://ucichessengine.wordpress.com/2011/03/16/description-of-uci-protocol/
 
-module Springer.UciParser (parse, GuiCommand(..)) where
+module Springer.UciParser (guiCommandParser, GuiCommand (..)) where
 
 import Control.Applicative ((<|>))
 import Data.Char (isLetter)
-import Text.ParserCombinators.ReadP
-import qualified Springer.FenParser as Fen
 import Data.Functor (($>))
+import Springer.FenParser (FenPosition, fenPosition)
+import Text.ParserCombinators.ReadP
 
 data GuiCommand
   = Uci
@@ -22,7 +22,7 @@ data GuiCommand
   | IsReady
   | UciNewGame
   | PositionStart
-  | Position Fen.FenPosition
+  | Position FenPosition
   | Go [GoCommand]
   | Stop
   | PonderHit
@@ -81,7 +81,7 @@ positionFen = do
   skipSpaces
   string "fen"
   skipSpaces
-  Position <$> Fen.parse
+  Position <$> fenPosition
 
 -- Examples: e2e4, e7e5, e1g1 (white short castling), e7e8q (for
 -- promotion)
@@ -93,7 +93,7 @@ move = do
   r <- satisfy isRank
   g <- satisfy isFile
   s <- satisfy isRank
-  return [f,r,g,s]
+  return [f, r, g, s]
 
 -- Example: "go infinite"
 go :: ReadP GuiCommand
@@ -127,14 +127,8 @@ request = many (skipSpaces >> oneRequest)
 oneRequest :: ReadP GuiCommand
 oneRequest = choice [uci, setOption, isReady, debug, uciNewGame, positionStart, positionFen, go, stop]
 
-parseMaybe :: ReadP a -> String -> Either String a
-parseMaybe parser input =
-  case readP_to_S parser input of
-    [] -> Left "nothing to parse"
-    s ->
-      let best = last s
-          remain = snd best
-       in if remain /= "" then Left remain else Right $ fst best
+guiCommandParser :: ReadP GuiCommand
+guiCommandParser = oneRequest
 
 kv :: ReadP String
 kv = munch1 isLetter
@@ -152,6 +146,3 @@ data EngineCommand
   = Id
   | Option
   | UciOK
-
-parse :: String -> Either String GuiCommand
-parse = parseMaybe oneRequest

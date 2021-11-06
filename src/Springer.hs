@@ -1,8 +1,9 @@
 module Springer (main) where
 
 import Data.List
+import Springer.Parse (parseWith)
+import Springer.UciParser (GuiCommand (..), guiCommandParser)
 import System.IO
-import Springer.UciParser (parse, GuiCommand(..))
 
 main :: IO ()
 main = do
@@ -12,20 +13,13 @@ main = do
         s <- getLine
         appendFile logFile ("< " <> s <> "\n")
         let resp = handleCommand s
-        case resp of
-          Left err -> appendFile logFile ("e " <> err <> "\n")
-          Right resp' -> do
-            mapM_ (\s -> appendFile logFile ("> " <> s <> "\n")) resp'
-            mapM_ putStrLn resp'
+        mapM_ (\s -> appendFile logFile ("> " <> s <> "\n")) resp
+        mapM_ putStrLn resp
         go
   go
 
-handleCommand :: String -> Either String [String]
-handleCommand s = do
-  case parse s of
-    Left err -> Left err
-    Right command -> Right $ respond command
-
+handleCommand :: String -> [String]
+handleCommand s = respond $ parseWith guiCommandParser s
 
 respond :: GuiCommand -> [String]
 respond command =
