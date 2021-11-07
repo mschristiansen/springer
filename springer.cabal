@@ -54,7 +54,8 @@ test-suite springer-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Main.hs
-  other-modules:       Springer.FenParserTest
+  other-modules:       Springer.FenParserTest,
+                       Springer.UciParserTest
   build-depends:       QuickCheck
                      , base
                      , hspec

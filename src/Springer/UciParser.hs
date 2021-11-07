@@ -2,14 +2,12 @@
 -- Engine. The GUI and the Engine can send and receive certain
 -- commands, which here will be named GuiCommands and EngineCommands.
 
--- https://hackage.haskell.org/package/base-4.15.0.0/docs/Text-ParserCombinators-ReadP.html
--- https://two-wrongs.com/parser-combinators-parsing-for-haskell-beginners.html
 -- https://ucichessengine.wordpress.com/2011/03/16/description-of-uci-protocol/
 
-module Springer.UciParser (guiCommandParser, GuiCommand (..)) where
+module Springer.UciParser where
 
 import Control.Applicative ((<|>))
-import Data.Char (isLetter)
+import Data.Char (isSpace)
 import Data.Functor (($>))
 import Springer.FenParser (FenPosition, fenPosition)
 import Springer.Parse
@@ -21,7 +19,7 @@ data GuiCommand
   | Register
   | IsReady
   | UciNewGame
-  | PositionStart
+  | PositionStart [String]
   | Position FenPosition
   | Go [GoCommand]
   | Stop
@@ -35,7 +33,7 @@ uci = string "uci" $> Uci
 -- Example: "debug" || "debug off"
 debug :: ReadP GuiCommand
 debug = do
-  string "debug"
+  string_ "debug"
   skipSpaces
   opt <- option Nothing (Just <$> true <|> Just <$> false)
   return $ Debug opt
@@ -49,17 +47,21 @@ false = string "off" $> False
 -- Example: "setoption name UCI_AnalyseMode value true"
 setOption :: ReadP GuiCommand
 setOption = do
-  string "setoption"
+  string_ "setoption"
   skipSpaces
-  string "name"
+  string_ "name"
   skipSpaces
   name <- kv
   value <- option Nothing $ do
     skipSpaces
-    string "value"
+    string_ "value"
     skipSpaces
     Just <$> kv
   pure $ SetOption name value
+
+-- | Currently not too sure how to use this command
+register :: ReadP GuiCommand
+register = string "register later" $> Register
 
 isReady :: ReadP GuiCommand
 isReady = string "isready" $> IsReady
@@ -67,19 +69,27 @@ isReady = string "isready" $> IsReady
 uciNewGame :: ReadP GuiCommand
 uciNewGame = string "ucinewgame" $> UciNewGame
 
+position :: ReadP GuiCommand
+position = positionStart <|> positionFen
+
 -- Example: "position startpos moves e2e4 e7e5"
 positionStart :: ReadP GuiCommand
 positionStart = do
-  string "position"
+  string_ "position"
   skipSpaces
-  string "startpos"
-  pure PositionStart
+  string_ "startpos"
+  moves <- option [] $ do
+    skipSpaces
+    string_ "moves"
+    skipSpaces
+    many (skipSpaces >> kv)
+  pure $ PositionStart moves
 
 positionFen :: ReadP GuiCommand
 positionFen = do
-  string "position"
+  string_ "position"
   skipSpaces
-  string "fen"
+  string_ "fen"
   skipSpaces
   Position <$> fenPosition
 
@@ -98,8 +108,9 @@ move = do
 -- Example: "go infinite"
 go :: ReadP GuiCommand
 go = do
-  string "go"
+  string_ "go"
   skipSpaces
+  string_ "infinite"
   pure $ Go [GoInfinite]
 
 data GoCommand
@@ -131,7 +142,7 @@ guiCommandParser :: ReadP GuiCommand
 guiCommandParser = oneRequest
 
 kv :: ReadP String
-kv = munch1 isLetter
+kv = munch1 (not . isSpace)
 
 -- Should only be sent after the engine has received a position
 data GuiPositionCommand

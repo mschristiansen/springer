@@ -7,7 +7,7 @@ import Test.Hspec
 
 test :: SpecWith ()
 test = do
-  describe "parse" $ do
+  describe "fenPosition" $ do
     it "can parse the starting position" $
       let fen =
             FenPosition

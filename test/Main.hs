@@ -1,13 +1,14 @@
 module Main where
 
-import qualified Springer.FenParserTest
+import qualified Springer.FenParserTest as Fen
+import qualified Springer.UciParserTest as Uci
 import Test.Hspec
 import Test.QuickCheck
-import Text.ParserCombinators.ReadP (readP_to_S)
 
 main :: IO ()
 main = hspec $ do
-  Springer.FenParserTest.test
+  Fen.test
+  Uci.test
 
 -- describe "isReady" $ do
 --   it "parses isReady" $
