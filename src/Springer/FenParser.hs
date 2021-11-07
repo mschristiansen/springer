@@ -6,6 +6,7 @@ import Control.Applicative ((<|>))
 import Control.Monad (void)
 import Data.Char (digitToInt, isDigit)
 import Data.Functor (($>))
+import qualified Data.Vector as V
 import Springer.Board
 import Springer.Parse
 
@@ -35,7 +36,7 @@ fenPosition = do
   pure $ FenPosition p a c e hm fm
 
 placement :: ReadP Board
-placement = Board . go [] <$> munch1 isPlacement
+placement = Board . V.fromList . go [] <$> munch1 isPlacement
   where
     isPlacement c = c `elem` "prnbqkPRNBQK12345678/"
     go acc [] = acc
@@ -85,14 +86,15 @@ castling = go [] <$> munch1 isCastle
         'K' -> WhiteKingCastling
         'q' -> BlackQueenCastling
         'k' -> BlackKingCastling
+        _ -> error "FenParser.castling: parsing error"
 
 data EnPassant = NoEnPassant | EnPassant String deriving (Show, Eq)
 
 enPassant :: ReadP EnPassant
-enPassant = (char '-' $> NoEnPassant) <|> EnPassant <$> move
+enPassant = (char '-' $> NoEnPassant) <|> EnPassant <$> koor
 
-move :: ReadP String
-move = do
+koor :: ReadP String
+koor = do
   let isFile f = f `elem` "abcdefgh"
       isRank r = r `elem` "12345678"
   f <- satisfy isFile

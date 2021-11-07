@@ -12,7 +12,7 @@ import Control.Applicative ((<|>))
 import Data.Char (isLetter)
 import Data.Functor (($>))
 import Springer.FenParser (FenPosition, fenPosition)
-import Text.ParserCombinators.ReadP
+import Springer.Parse
 
 data GuiCommand
   = Uci
@@ -146,3 +146,20 @@ data EngineCommand
   = Id
   | Option
   | UciOK
+
+newtype UciMove = UciMove String deriving (Show)
+
+-- | Examples:  e2e4, e7e5, e1g1 (white short castling), e7e8q (for promotion)
+uciMove :: ReadP UciMove
+uciMove = do
+  a <- koor
+  b <- koor
+  pure $ UciMove (a <> b)
+
+koor :: ReadP String
+koor = do
+  let isFile f = f `elem` "abcdefgh"
+      isRank r = r `elem` "12345678"
+  f <- satisfy isFile
+  r <- satisfy isRank
+  return [f, r]
